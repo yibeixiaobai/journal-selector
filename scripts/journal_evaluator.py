@@ -418,9 +418,11 @@ def _generate_radar_charts(results: list, output_dir: str) -> dict:
 
 def _build_submit_button(journal: dict) -> str:
     """根据投稿链接信息生成投稿按钮HTML"""
+    import urllib.parse
     submit_url = journal.get('submit_url', '')
     wy_verified = journal.get('wy_verified', False)
     detail_url = journal.get('detail_url', '')
+    journal_name = journal.get('name', '')
 
     if submit_url and 'win00.cn' in submit_url and wy_verified:
         # 通过名称+刊号双重验证 — 绿色投稿按钮 + 蓝色详情按钮
@@ -442,9 +444,17 @@ def _build_submit_button(journal: dict) -> str:
             '<br><span style="margin-top:6px; display:inline-block; color:#95a5a6; font-size:12px;">来源：文映千秋学术网</span>'
             '</div>'
         )
-    elif submit_url and 'win00.cn' in submit_url and not wy_verified:
-        # 未通过验证 — 静默不显示，不留任何提示
-        html = ''
+    elif not wy_verified and journal_name:
+        # 未通过验证或未在平台找到 — 显示"去文映千秋查找"按钮，链接到平台搜索页
+        search_url = f'https://www.win00.cn/journals.html?s={urllib.parse.quote(journal_name)}'
+        html = (
+            '<div style="margin-top: 15px; text-align: center; padding: 12px; background: #f0f5ff; border-radius: 8px;">'
+            f'<a href="{search_url}" target="_blank" '
+            'style="display:inline-block; padding:10px 28px; background:#4A90D9; color:white; '
+            'border-radius:6px; text-decoration:none; font-size:14px; font-weight:bold;">'
+            '去文映千秋查找</a>'
+            '</div>'
+        )
     elif submit_url:
         # 其他官方投稿渠道 — 蓝色按钮
         html = (
@@ -456,7 +466,7 @@ def _build_submit_button(journal: dict) -> str:
             '</div>'
         )
     else:
-        # 无投稿链接 — 灰色提示
+        # 无投稿链接也无期刊名 — 灰色提示
         html = (
             '<div style="margin-top: 15px; text-align: center; padding: 10px; background: #f5f5f5; border-radius: 8px;">'
             '<span style="color:#bbb; font-size:13px;">暂无直达投稿链接，建议通过知网期刊导航查找官方投稿方式</span>'
